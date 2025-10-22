@@ -23,8 +23,9 @@ jobs:
 
     - name: Set up Chocolatey
       run: choco install chocolatey
+      
     - name: Install dependencies
-      run: choco install ghc cabal msys2 
+      run: choco install ghc cabal 
 
-    - name: Install dependencies
-      run: msys2 -c 'uname -a; pwd; ls -lah;'
+    - name: Build jhcr
+      run: msys2 -c 'PATCH_LVL=126 COMMONJ=common-1.26a.j make build'
