@@ -11,6 +11,8 @@ jobs:
     strategy:
       matrix:
         include:
+          - patch_level: 203
+            common_j: common-latest.j
           - patch_level: 126
             common_j: common-1.26a.j
     runs-on: windows-latest
