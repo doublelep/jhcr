@@ -7,6 +7,12 @@ on:
     branches: [ "master" ]
 
 jobs:
+  strategy:
+    matrix:
+      include:
+        - patch_level: 126
+          common_j: common-1.26a.j
+
   build:
 
     runs-on: windows-latest
@@ -18,7 +24,7 @@ jobs:
         path-type: inherit
         install: >-
           gcc
-          git
+
     - uses: actions/checkout@v4
 
     - name: Set up Chocolatey
@@ -31,9 +37,9 @@ jobs:
       run: cabal update
 
     - name: Build jhcr
-      run: msys2 -c 'PATCH_LVL=126 COMMONJ=common-1.26a.j make build'
+      run: msys2 -c 'PATCH_LVL=${{ matrix.patch_level }} COMMONJ=${{ matrix.common_j }} PREFIX=. make build install'
       
     - uses: actions/upload-artifact@v4
       with:
-        name: jhcr.exe
-        path: dist-newstyle/**/jhcr.exe
+        name: jhcr-${{patch_level}}.exe
+        path: jhcr.exe
