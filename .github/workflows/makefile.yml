@@ -27,4 +27,4 @@ jobs:
       run: choco install ghc cabal msys2 
 
     - name: Install dependencies
-    - run: msys2 -c 'uname -a; pwd; ls -lah;'
+      run: msys2 -c 'uname -a; pwd; ls -lah;'
