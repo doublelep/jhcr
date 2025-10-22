@@ -25,7 +25,10 @@ jobs:
       run: choco install chocolatey
       
     - name: Install dependencies
-      run: choco install ghc cabal 
+      run: choco install ghc cabal
+
+    - name: Update cabal
+      run: cabal update
 
     - name: Build jhcr
       run: msys2 -c 'PATCH_LVL=126 COMMONJ=common-1.26a.j make build'
