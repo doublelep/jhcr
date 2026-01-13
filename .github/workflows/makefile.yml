@@ -13,6 +13,7 @@ jobs:
         include:
           - patch_level: 203
             common_j: common-latest.j
+            release: true
           - patch_level: 126
             common_j: common-1.26a.j
     runs-on: windows-latest
@@ -45,10 +46,11 @@ jobs:
         
     - name: GH Release
       uses: softprops/action-gh-release@v2.5.0
+      if: matrix.release == true
       with:
         # Attaches the per-OS files produced on this runner
         files: |
-          jhcr-*.exe
+          jhcr.exe
         tag_name: ${{ github.ref_name }}   # ensures assets attach to the pushed v* tag
         name: ${{ github.ref_name }}
         draft: false
