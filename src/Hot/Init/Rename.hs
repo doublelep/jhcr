@@ -19,6 +19,7 @@ import Control.Monad.Reader
 
 
 import Data.Int
+import Data.List (isPrefixOf)
 import Data.Monoid
 import Data.Maybe
 import Data.Bifunctor (second)
@@ -50,13 +51,15 @@ data RenameVariablesState = RenameVariablesState
     , _localCount :: Int32
     , _fnScope :: Map Name Var
     , _newFnCount :: Int32
+    , _debugScope :: Map Name Var
+    , _debugCount :: Int32
     } deriving (Generic, Show)
 makeLenses ''RenameVariablesState
 
 instance Binary RenameVariablesState
 
 defaultRenameVariableState :: RenameVariablesState
-defaultRenameVariableState = RenameVariablesState mempty mempty mempty 1 mempty 0
+defaultRenameVariableState = RenameVariablesState mempty mempty mempty 1 mempty 0 mempty 0
 
 
 newtype RenameVariablesM a = RenameVariablesM { unRenameVariablesM :: ReaderT (Mode, Type -> Type) (State RenameVariablesState) a }
@@ -104,6 +107,31 @@ addGlobal c name ty isArray = do
             globalScope %= (at name ?~ v)
             return v
 
+-- we have to keep the API functions in a different scope because otherwise
+-- our IDs get all desynced. And we cannot simply not put them into scope as
+-- we look them up if they're used by the user.
+getDebugApiID :: Name -> [Type] -> Type -> RenameVariablesM Var
+getDebugApiID name args ret = do
+    v' <- uses debugScope $ Map.lookup name
+    case v' of
+        Just v -> pure v
+        Nothing -> do
+            mode <- asks fst
+            case mode of
+                Init -> do
+                    id <- uses debugScope ((99999999 +) . fromIntegral . succ . Map.size)
+                    let v = H.Fn name args ret id Nothing
+                    debugScope %= (at name ?~ v)
+                    fnScope %= (at name ?~ v)
+                    return v
+                Update -> do
+                    -- to be honest this is just copied. i have no idea what
+                    -- happens when a new function called JHCR_API_*** is
+                    -- reloaded
+                    id <- debugCount <-= 1
+                    let v = H.Fn name args ret id Nothing
+                    debugScope %= (at name ?~ v)
+                    return v
 {-
  - This is mostly the same as addFunction (TODO: refactor)
  - except that we don't run the type-conversion function ( snd in the Reader
@@ -115,6 +143,8 @@ addGlobal c name ty isArray = do
  - converter function).
  -}
 addNative :: Name -> [Type] -> Type -> RenameVariablesM Var
+addNative name args ret
+    | "JHCR_API_" `isPrefixOf` name = getDebugApiID name args ret
 addNative name args ret = do
     v' <- uses fnScope $ Map.lookup name
     case v' of
@@ -132,7 +162,8 @@ addNative name args ret = do
             case mode of
                 Init -> do
                     id <- uses fnScope (fromIntegral . succ . Map.size)
-                    let v = H.Fn name args ret id Nothing
+                    offset <- fromIntegral <$> uses debugScope Map.size
+                    let v = H.Fn name args ret (id - offset) Nothing
                     fnScope %= (at name ?~ v)
                     return v
 
@@ -152,6 +183,8 @@ sigEq
         and [ args1 == args2, ret1 == ret2 ]
 
 addFunction :: Name -> [Type] -> Type -> RenameVariablesM Var
+addFunction name args ret
+    | "JHCR_API_" `isPrefixOf` name = getDebugApiID name args ret
 addFunction name args ret = do
     v' <- uses fnScope $ Map.lookup name
     case v' of
@@ -172,7 +205,8 @@ addFunction name args ret = do
             case mode of
                 Init -> do
                     id <- uses fnScope (fromIntegral . succ . Map.size)
-                    let v = H.Fn name (map f args) (f ret) id Nothing
+                    offset <- fromIntegral <$> uses debugScope Map.size
+                    let v = H.Fn name args ret (id - offset) Nothing
                     fnScope %= (at name ?~ v)
                     return v
 

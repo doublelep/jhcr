@@ -435,14 +435,14 @@ initX o = do
             
             let rt1' = addPrefix' "JHCR" rt1
                 rt2' = addPrefix' "JHCR" rt2
-                rtApi' = addPrefix'  "JHCR" rtApi
+                rtApi' = addPrefix' "JHCR" rtApi
 
             let (prelude', st) = Rename.compile' Rename.Init id prelude
                 typeHierachy = LCA.child2parent prelude
 
                 (_, st') = Rename.compile Rename.Init id st rtApi'
             
-            p <- parse J.programm inputjPath <$> readFile inputjPath
+            p <- fmap removeAPIDefs . parse J.programm inputjPath <$> readFile inputjPath
             case p of
                 Left err -> do
                     hPutStrLn stderr $ errorBundlePretty err
