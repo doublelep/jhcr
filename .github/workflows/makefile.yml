@@ -42,3 +42,17 @@ jobs:
       with:
         name: jhcr-${{ matrix.patch_level }}.exe
         path: jhcr.exe
+        
+    - name: GH Release
+      uses: softprops/action-gh-release@v2.5.0
+      with:
+        # Attaches the per-OS files produced on this runner
+        files: |
+          jhcr-*.exe
+        tag_name: ${{ github.ref_name }}   # ensures assets attach to the pushed v* tag
+        name: ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
