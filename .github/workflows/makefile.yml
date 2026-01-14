@@ -51,8 +51,8 @@ jobs:
         # Attaches the per-OS files produced on this runner
         files: |
           jhcr.exe
-        tag_name: ${{ github.ref_name }}   # ensures assets attach to the pushed v* tag
-        name: ${{ github.ref_name }}
+        tag_name: build-${{ github.sha }}   # ensures assets attach to the pushed v* tag
+        name: build-${{ github.sha }}
         draft: false
         prerelease: false
         generate_release_notes: true
