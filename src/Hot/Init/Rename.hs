@@ -206,7 +206,7 @@ addFunction name args ret = do
                 Init -> do
                     id <- uses fnScope (fromIntegral . succ . Map.size)
                     offset <- fromIntegral <$> uses debugScope Map.size
-                    let v = H.Fn name args ret (id - offset) Nothing
+                    let v = H.Fn name (map f args) (f ret) (id - offset) Nothing
                     fnScope %= (at name ?~ v)
                     return v
 
