@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - patch_level: 203
+          - patch_level: 300
             common_j: common-latest.j
             release: true
           - patch_level: 126
